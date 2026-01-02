@@ -23,6 +23,23 @@ export default function HeroSequence({ sequencePath, frameCount, onLoadProgress,
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
+  const drawFrame = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !imagesRef.current[frameIndexRef.current]) return;
+
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    // Ensure canvas is sized correctly
+    if (canvas.width !== imagesRef.current[0].naturalWidth || canvas.height !== imagesRef.current[0].naturalHeight) {
+      canvas.width = imagesRef.current[0].naturalWidth;
+      canvas.height = imagesRef.current[0].naturalHeight;
+    }
+    
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(imagesRef.current[frameIndexRef.current], 0, 0, canvas.width, canvas.height);
+  }, []);
+
   const preloadImages = useCallback(() => {
     let loadedCount = 0;
     imagesRef.current = []; // Clear previous images
@@ -39,23 +56,23 @@ export default function HeroSequence({ sequencePath, frameCount, onLoadProgress,
         onLoadProgress(progress);
         if (loadedCount === frameCount) {
           onLoaded();
-          if (canvasRef.current && imagesRef.current[0]) {
-             const context = canvasRef.current.getContext('2d');
-             if (context) {
-                canvasRef.current.width = imagesRef.current[0].width;
-                canvasRef.current.height = imagesRef.current[0].height;
-                context.drawImage(imagesRef.current[0], 0, 0);
-             }
-          }
+          frameIndexRef.current = 0; // Ensure we start at the first frame
+          requestAnimationFrame(drawFrame); // Draw the first frame immediately
         }
       };
       img.onerror = () => {
         // Handle image loading errors if necessary
         loadedCount++;
-        if (loadedCount === frameCount) onLoaded();
+        const progress = Math.round((loadedCount / frameCount) * 100);
+        onLoadProgress(progress);
+        if (loadedCount === frameCount) {
+          onLoaded();
+          frameIndexRef.current = 0;
+          requestAnimationFrame(drawFrame);
+        }
       };
     }
-  }, [frameCount, sequencePath, onLoadProgress, onLoaded]);
+  }, [frameCount, sequencePath, onLoadProgress, onLoaded, drawFrame]);
 
   useEffect(() => {
     preloadImages();
@@ -74,18 +91,7 @@ export default function HeroSequence({ sequencePath, frameCount, onLoadProgress,
       frameIndexRef.current = index;
       requestAnimationFrame(drawFrame);
     }
-  }, [frameCount, isReducedMotion]);
-
-  const drawFrame = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !imagesRef.current[frameIndexRef.current]) return;
-
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(imagesRef.current[frameIndexRef.current], 0, 0, canvas.width, canvas.height);
-  };
+  }, [frameCount, isReducedMotion, drawFrame]);
   
   useEffect(() => {
     if (isReducedMotion) {
@@ -98,7 +104,7 @@ export default function HeroSequence({ sequencePath, frameCount, onLoadProgress,
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, isReducedMotion]);
+  }, [handleScroll, isReducedMotion, drawFrame]);
 
   return (
     <div className="absolute inset-0 w-full h-full -z-10">
