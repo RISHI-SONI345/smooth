@@ -54,27 +54,42 @@ export default function SmoodhHeroPage() {
 
 
   useEffect(() => {
+    // Fake progress animation
+    const progressInterval = setInterval(() => {
+      setLoadProgress(prev => {
+        if (prev >= 90) return prev; // Hold at 90% until video is ready
+        return prev + 10;
+      });
+    }, 200);
+
     // Safety fallback: If video takes too long (>5s), force load
     const safetyTimer = setTimeout(() => {
       if (isInitialLoading) {
         console.warn('Loading timed out, forcing display');
+        setLoadProgress(100);
         setIsInitialLoading(false);
       }
     }, 5000);
-
-    // Wait for both the minimum timer (for branding) and the sequence to load
+    
+    // Wait for sequence to load
     if (isSequenceLoaded) {
+      setLoadProgress(100);
       const timer = setTimeout(() => {
         setIsInitialLoading(false);
-      }, 500); // Small buffer after load
+      }, 500); 
+      
       return () => {
+        clearInterval(progressInterval);
         clearTimeout(timer);
         clearTimeout(safetyTimer);
       };
     }
     
-    return () => clearTimeout(safetyTimer);
-  }, [isSequenceLoaded]);
+    return () => {
+      clearInterval(progressInterval);
+      clearTimeout(safetyTimer);
+    };
+  }, [isInitialLoading, isSequenceLoaded]);
 
   const handleNext = useCallback(() => {
     changeVariant(currentVariantIndex + 1);
@@ -88,7 +103,7 @@ export default function SmoodhHeroPage() {
 
   return (
     <>
-      <Loader progress={100} isVisible={isInitialLoading || isSwitching} />
+      <Loader progress={loadProgress} isVisible={isInitialLoading || isSwitching} />
       <main className={`transition-opacity duration-1000 ${isInitialLoading ? 'opacity-0' : 'opacity-100'}`}>
         <Header />
         
