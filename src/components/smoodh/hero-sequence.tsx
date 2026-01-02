@@ -41,70 +41,36 @@ export default function HeroSequence({ sequencePath, frameCount, onLoadProgress,
   }, []);
 
   const preloadImages = useCallback(() => {
-    let loadedCount = 0;
-    imagesRef.current = []; // Clear previous images
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image();
-      // NOTE: As we don't have 240 distinct frames, we use the same image for all.
-      // The logic is set up to handle a sequence of frames when available.
-      img.src = sequencePath; 
-      imagesRef.current.push(img);
-
-      img.onload = () => {
-        loadedCount++;
-        const progress = Math.round((loadedCount / frameCount) * 100);
-        onLoadProgress(progress);
-        if (loadedCount === frameCount) {
-          onLoaded();
-          frameIndexRef.current = 0; // Ensure we start at the first frame
-          requestAnimationFrame(drawFrame); // Draw the first frame immediately
-        }
-      };
-      img.onerror = () => {
-        // Handle image loading errors if necessary
-        loadedCount++;
-        const progress = Math.round((loadedCount / frameCount) * 100);
-        onLoadProgress(progress);
-        if (loadedCount === frameCount) {
-          onLoaded();
-          frameIndexRef.current = 0;
-          requestAnimationFrame(drawFrame);
-        }
-      };
-    }
-  }, [frameCount, sequencePath, onLoadProgress, onLoaded, drawFrame]);
+    // This logic is flawed for a single animated WebP. We will bypass it.
+    // For a real frame sequence, this would need to load each frame.
+    const img = new Image();
+    img.src = sequencePath;
+    img.onload = () => {
+        onLoadProgress(100);
+        onLoaded();
+        imagesRef.current = [img]; // Store the single image
+        frameIndexRef.current = 0;
+        requestAnimationFrame(drawFrame); // Draw the first frame
+    };
+    img.onerror = () => {
+        onLoadProgress(100);
+        onLoaded();
+    };
+  }, [sequencePath, onLoadProgress, onLoaded, drawFrame]);
 
   useEffect(() => {
     preloadImages();
   }, [preloadImages]);
+  
+  // The scroll handler is removed because we are not animating on scroll with a single WebP.
+  // The animation is contained within the WebP file itself.
 
-  const handleScroll = useCallback(() => {
-    if(isReducedMotion) return;
-
-    const scrollFraction = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    const index = Math.min(
-      frameCount - 1,
-      Math.max(0, Math.floor(scrollFraction * frameCount))
-    );
-
-    if (index !== frameIndexRef.current) {
-      frameIndexRef.current = index;
+  useEffect(() => {
+    if (imagesRef.current.length > 0) {
+      frameIndexRef.current = 0;
       requestAnimationFrame(drawFrame);
     }
-  }, [frameCount, isReducedMotion, drawFrame]);
-  
-  useEffect(() => {
-    if (isReducedMotion) {
-      if (imagesRef.current.length > 0) {
-        frameIndexRef.current = 0;
-        drawFrame();
-      }
-      return;
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, isReducedMotion, drawFrame]);
+  }, [isReducedMotion, drawFrame]);
 
   return (
     <div className="absolute inset-0 w-full h-full -z-10">

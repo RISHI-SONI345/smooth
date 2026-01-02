@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'vrtozamturhouzmlsrip.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

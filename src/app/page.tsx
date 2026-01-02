@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { config } from '@/app/config/smoodh-config';
 import type { Variant } from '@/app/lib/types';
 import Header from '@/components/smoodh/header';
 import HeroContent from '@/components/smoodh/hero-content';
-import HeroSequence from '@/components/smoodh/hero-sequence';
 import Loader from '@/components/smoodh/loader';
 import SocialIcons from '@/components/smoodh/social-icons';
 import VariantNav from '@/components/smoodh/variant-nav';
@@ -14,7 +14,6 @@ export default function SmoodhHeroPage() {
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const currentVariant: Variant = useMemo(() => config.variants[currentVariantIndex], [currentVariantIndex]);
   
@@ -36,7 +35,21 @@ export default function SmoodhHeroPage() {
     
     setIsSwitching(true);
     setCurrentVariantIndex(nextIndex);
+
+    // Simulate loading for variant switch
+    setTimeout(() => {
+      setIsSwitching(false);
+    }, 1000); 
   }, [isSwitching]);
+
+
+  useEffect(() => {
+    // Simulate initial load
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleNext = useCallback(() => {
     changeVariant(currentVariantIndex + 1);
@@ -46,28 +59,26 @@ export default function SmoodhHeroPage() {
     changeVariant(currentVariantIndex - 1);
   }, [currentVariantIndex, changeVariant]);
 
-  const handleSequenceLoaded = useCallback(() => {
-    if (isInitialLoading) {
-      setIsInitialLoading(false);
-    }
-    setIsSwitching(false);
-  }, [isInitialLoading]);
-
   const sequenceKey = useMemo(() => currentVariant.id, [currentVariant]);
 
   return (
     <>
-      <Loader progress={loadingProgress} isVisible={isInitialLoading} />
+      <Loader progress={100} isVisible={isInitialLoading || isSwitching} />
       <main className={`min-h-screen transition-opacity duration-1000 ${isInitialLoading ? 'opacity-0' : 'opacity-100'}`}>
         <Header />
         <div className="relative h-screen w-full overflow-hidden">
-          <HeroSequence
-            key={sequenceKey}
-            sequencePath={currentVariant.webpSequencePath}
-            frameCount={currentVariant.frameCount}
-            onLoadProgress={setLoadingProgress}
-            onLoaded={handleSequenceLoaded}
-          />
+          <div className="absolute inset-0 w-full h-full -z-10">
+            <Image
+              key={sequenceKey}
+              src={currentVariant.webpSequencePath}
+              alt={`${currentVariant.name} product`}
+              fill
+              priority
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-gradient-radial from-transparent to-black/30" />
+          </div>
           <div className="absolute inset-0 grid grid-cols-6 grid-rows-3 h-screen w-screen pointer-events-none">
             <div className="col-span-6 row-span-3 lg:col-span-3">
               <HeroContent key={sequenceKey} variant={currentVariant} isSwitching={isSwitching} />
@@ -96,7 +107,7 @@ export default function SmoodhHeroPage() {
           </div>
           <SocialIcons />
         </div>
-        <div style={{ height: `calc(${currentVariant.frameCount} * 8px)` }} />
+        {/* Removed the large spacer div as it's no longer needed for scroll animation */}
       </main>
     </>
   );
