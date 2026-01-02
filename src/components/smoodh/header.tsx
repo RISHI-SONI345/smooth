@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { appConfig as config } from '@/app/config/smoodh-config';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/smoodh/theme-toggle';
-import { Code } from 'lucide-react';
+
 
 export default function Header() {
   return (
@@ -29,11 +29,7 @@ export default function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-           <Link href="/generate-frames" passHref>
-             <Button variant="ghost" size="icon" className="rounded-full" aria-label="Generate Frames Tool">
-               <Code className="h-4 w-4" />
-             </Button>
-           </Link>
+{/* Generate Frames Tool Removed */}
           <ThemeToggle />
         </div>
       </div>
