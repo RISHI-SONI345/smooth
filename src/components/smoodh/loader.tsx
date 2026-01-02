@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { config } from '@/app/config/smoodh-config';
+import { appConfig as config } from '@/app/config/smoodh-config';
 import { Progress } from '@/components/ui/progress';
 
 interface LoaderProps {

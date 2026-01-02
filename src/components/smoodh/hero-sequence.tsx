@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 interface HeroSequenceProps {
   sequencePath: string;
@@ -10,73 +10,129 @@ interface HeroSequenceProps {
 }
 
 export default function HeroSequence({ sequencePath, frameCount, onLoadProgress, onLoaded }: HeroSequenceProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
-  const frameIndexRef = useRef<number>(0);
-  const [isReducedMotion, setIsReducedMotion] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [useFallback, setUseFallback] = useState(false);
+  const targetTimeRef = useRef(0);
+  const animationFrameRef = useRef<number | undefined>(undefined);
 
+  // Scroll-based video scrubbing with smoothing
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setIsReducedMotion(mediaQuery.matches);
-    const listener = () => setIsReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener('change', listener);
-    return () => mediaQuery.removeEventListener('change', listener);
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      
+      // Calculate scroll progress over first 2 viewport heights
+      const maxScroll = windowHeight * 2;
+      const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
+      
+      setScrollProgress(progress);
+      
+      // Set target time based on scroll
+      if (video.duration && !isNaN(video.duration)) {
+        targetTimeRef.current = progress * video.duration;
+      }
+    };
+
+    // Smooth animation loop
+    const updateVideo = () => {
+      if (video && !video.paused) video.pause(); // Ensure paused
+      
+      if (video && video.duration) {
+        // LERP: Move current time towards target time
+        // The 0.05 factor makes it "heavier" and smoother (less jittery)
+        const diff = targetTimeRef.current - video.currentTime;
+        
+        // Only seek if the difference is noticeable (>0.05s) AND we aren't already seeking
+        // This prevents "thrashing" the decoder which causes massive lag
+        if (Math.abs(diff) > 0.05 && !video.seeking) {
+           // We clamp the step to prevent huge jumps that stall the decoder
+           const step = diff * 0.1;
+           video.currentTime += step;
+        }
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(updateVideo);
+    };
+
+    // Start loop
+    animationFrameRef.current = requestAnimationFrame(updateVideo);
+    
+    // Prevent video from auto-playing
+    video.pause();
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initialize
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
-  const drawFrame = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !imagesRef.current[frameIndexRef.current]) return;
-
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    
-    // Ensure canvas is sized correctly
-    if (canvas.width !== imagesRef.current[0].naturalWidth || canvas.height !== imagesRef.current[0].naturalHeight) {
-      canvas.width = imagesRef.current[0].naturalWidth;
-      canvas.height = imagesRef.current[0].naturalHeight;
-    }
-    
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(imagesRef.current[frameIndexRef.current], 0, 0, canvas.width, canvas.height);
-  }, []);
-
-  const preloadImages = useCallback(() => {
-    // This logic is flawed for a single animated WebP. We will bypass it.
-    // For a real frame sequence, this would need to load each frame.
-    const img = new Image();
-    img.src = sequencePath;
-    img.onload = () => {
-        onLoadProgress(100);
-        onLoaded();
-        imagesRef.current = [img]; // Store the single image
-        frameIndexRef.current = 0;
-        requestAnimationFrame(drawFrame); // Draw the first frame
-    };
-    img.onerror = () => {
-        onLoadProgress(100);
-        onLoaded();
-    };
-  }, [sequencePath, onLoadProgress, onLoaded, drawFrame]);
-
-  useEffect(() => {
-    preloadImages();
-  }, [preloadImages]);
-  
-  // The scroll handler is removed because we are not animating on scroll with a single WebP.
-  // The animation is contained within the WebP file itself.
-
-  useEffect(() => {
-    if (imagesRef.current.length > 0) {
-      frameIndexRef.current = 0;
-      requestAnimationFrame(drawFrame);
-    }
-  }, [isReducedMotion, drawFrame]);
+  // Calculate parallax effects
+  const parallaxScale = 1 + scrollProgress * 0.15;
+  const parallaxY = scrollProgress * 30;
+  const parallaxOpacity = 1 - scrollProgress * 0.2;
 
   return (
-    <div className="absolute inset-0 w-full h-full -z-10">
-      <canvas ref={canvasRef} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/20" />
-      <div className="absolute inset-0 bg-gradient-radial from-transparent to-black/30" />
+    <div 
+      ref={containerRef}
+      className="absolute inset-0 w-full h-full -z-10 overflow-hidden"
+    >
+      {/* Scroll-based Video (Hidden if error/fallback) */}
+      <div 
+        className={`absolute inset-0 w-full h-full transition-transform duration-100 ease-out ${useFallback ? 'hidden' : 'block'}`}
+        style={{
+          transform: `scale(${parallaxScale}) translateY(${parallaxY}px)`,
+          opacity: parallaxOpacity,
+        }}
+      >
+        <video
+          ref={videoRef}
+          src={sequencePath}
+          className="w-full h-full object-cover"
+          muted
+          playsInline
+          preload="auto"
+          loop={false}
+          suppressHydrationWarning={true}
+        />
+      </div>
+
+      {/* Fallback Image (Shown if video fails) */}
+      {useFallback && (
+        <div 
+          className="absolute inset-0 w-full h-full transition-transform duration-100 ease-out"
+          style={{
+            transform: `scale(${parallaxScale}) translateY(${parallaxY}px)`,
+            opacity: parallaxOpacity,
+          }}
+        >
+           {/* eslint-disable-next-line @next/next/no-img-element */}
+           <img
+            src={sequencePath}
+            alt="SMOODH Product Animation"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {/* Overlay gradients */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent pointer-events-none" />
+      
+      {/* Scroll-responsive ambient gradient */}
+      <div 
+        className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/40 pointer-events-none transition-opacity duration-300"
+        style={{ opacity: 0.5 + scrollProgress * 0.5 }}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import type { Variant, CTA } from '@/app/lib/types';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Plus } from 'lucide-react';
-import { config } from '@/app/config/smoodh-config';
+import { appConfig as config } from '@/app/config/smoodh-config';
 
 interface HeroContentProps {
   variant: Variant;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react';
-import { config } from '@/app/config/smoodh-config';
+import { appConfig as config } from '@/app/config/smoodh-config';
 
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(config.defaultMode === 'dark');

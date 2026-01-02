@@ -1,6 +1,6 @@
 import type { SmoodhConfig } from '@/app/lib/types';
 
-export const config: SmoodhConfig = {
+export const appConfig: SmoodhConfig = {
   brand: "SMOODH",
   defaultMode: "dark",
   logoPath: "/assets/logo-smoodh.svg",
@@ -10,44 +10,44 @@ export const config: SmoodhConfig = {
       id: "01",
       name: "Chocolate",
       subtitle: "Flavoured Milk",
-      description: "Creamy chocolate milk with rich cocoa notes and a luxuriously smooth mouthfeel.",
+      description: "Creamy chocolate flavoured milk with rich cocoa taste and smooth texture.",
       themeColor: "#8B4513",
       themeColorHsl: "30 41% 40%",
       modeOverride: null,
-      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choclate/Nanobanana__midspin_1080p_202601021152-ezgif.com-video-to-webp-converter.webp",
+      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choccco/hero-optimized.mp4",
       frameCount: 240
     },
     {
       id: "02",
       name: "Toffee Caramel",
       subtitle: "Flavoured Milk",
-      description: "Velvety toffee and luscious caramel swirled together with a decadent, buttery finish.",
+      description: "Smooth milk blended with sweet toffee and caramel notes.",
       themeColor: "#E6A23C",
       themeColorHsl: "37 79% 60%",
       modeOverride: null,
-      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choclate/Nanobanana__midspin_1080p_202601021152-ezgif.com-video-to-webp-converter.webp",
+      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choccco/hero-optimized.mp4",
       frameCount: 240
     },
     {
       id: "03",
       name: "Coffee Frappe",
       subtitle: "Flavoured Milk",
-      description: "Bold, aromatic coffee notes expertly blended into a creamy, chilled milk base.",
+      description: "Bold coffee flavour mixed with creamy milk for an energizing taste.", 
       themeColor: "#5C4033",
       themeColorHsl: "20 30% 28%",
       modeOverride: null,
-      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choclate/Nanobanana__midspin_1080p_202601021152-ezgif.com-video-to-webp-converter.webp",
+      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choccco/hero-optimized.mp4",
       frameCount: 240
     },
     {
       id: "04",
       name: "Hazelnut Chocolate",
       subtitle: "Flavoured Milk",
-      description: "Toasted, nutty hazelnut meets rich dark chocolate for an unforgettable, decadent sip.",
+      description: "Rich chocolate milk infused with roasted hazelnut flavour.",
       themeColor: "#2F1B0C",
       themeColorHsl: "29 58% 12%",
       modeOverride: null,
-      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choclate/Nanobanana__midspin_1080p_202601021152-ezgif.com-video-to-webp-converter.webp",
+      webpSequencePath: "https://vrtozamturhouzmlsrip.supabase.co/storage/v1/object/public/smooth%20choccco/hero-optimized.mp4",
       frameCount: 240
     }
   ],
